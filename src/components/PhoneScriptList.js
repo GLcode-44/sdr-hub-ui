@@ -1,10 +1,40 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
-
+import PhoneScriptService from '../services/PhoneScriptService';
+import PhoneScript from './PhoneScript';
 const PhoneScriptList = () => {
 
   const navigate = useNavigate();
 
+  const [loading, setLoading] = useState(true);
+  const [phoneScripts, setPhoneScripts] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await PhoneScriptService.getPhoneScripts();
+        setPhoneScripts(response.data);
+      } catch(error) {
+        console.log(error);
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  const deletePhoneScript = (e, id) => {
+    e.preventDefault();
+    PhoneScriptService.deletePhoneScript(id)
+    .then((res) => {
+        if(phoneScripts) {
+          setPhoneScripts((prevElement) => {
+              return prevElement.filter((phoneScript) => phoneScript.id !== id);
+          })
+        }
+    });
+  };
+  
   return ( 
   <>
   <div className="container mx-auto my-8">
@@ -29,22 +59,13 @@ const PhoneScriptList = () => {
             <th className="p-3 text-sm font-semibold tracking-wide text-right whitespace-nowrap">Actions</th>
           </tr>
         </thead>
+        {!loading && (
         <tbody className="bg-white">
-          <tr>
-            <td className="text-left p-3 whitespace-nowrap">Initial outreach A</td>
-            <td className="text-left p-3 whitespace-pre-wrap text-xs">This is a sample script for an initial outreach phone campaign.</td>
-            <td className="text-left p-3 whitespace-nowrap">10</td>
-            <td className="text-left p-3 whitespace-nowrap">0</td>
-            <td className="text-left p-3 whitespace-nowrap">Initial outreach B</td>
-            <td className="text-left p-3 whitespace-pre-wrap text-xs">This is a sample script for an initial outreach phone campaign. It will be the 2nd script for testing purposes.</td>
-            <td className="text-left p-3 whitespace-nowrap">4</td>
-            <td className="text-left p-3 whitespace-nowrap">7</td>
-            <td className="text-right p-3 whitespace-nowrap font-medium text-sm">
-              <a href="#" className="text-indigo-600 hover:text-indigo-800 px-2">Edit</a>
-              <a href="#" className="text-indigo-600 hover:text-indigo-800 px-2">Delete</a>
-            </td>
-          </tr>
+            {phoneScripts.map((phoneScript) => (
+              <PhoneScript phoneScript={phoneScript} deletePhoneScript={deletePhoneScript}key={phoneScript.id}></PhoneScript>
+          ))}
         </tbody>
+        )}
       </table>
     </div>
   </div>
